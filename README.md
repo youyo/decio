@@ -104,6 +104,8 @@ git diff | decio \
   --prompt "Determine the appropriate review level."
 ```
 
+![Decio choice demo: an auth change is classified as security and the pre-declared security review runs](docs/demo-choice.gif)
+
 Score:
 
 ```sh
@@ -111,6 +113,8 @@ git diff | decio \
   --score "Rate the security risk of this change." \
   --min 0 --max 100 --json
 ```
+
+![Decio score demo: the same change scores 89 out of 100 and a score range action runs](docs/demo-score.gif)
 
 The default output is a single plain value. Use `--json` when downstream code
 needs metadata such as the provider, model, or confidence. With

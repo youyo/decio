@@ -90,6 +90,8 @@ git diff | decio \
   --prompt "Determine the appropriate review level."
 ```
 
+![Decio の choice デモ: 認証まわりの変更が security に分類され、事前定義されたセキュリティレビューが実行されます](docs/demo-choice.gif)
+
 Score:
 
 ```sh
@@ -97,6 +99,8 @@ git diff | decio \
   --score "Rate the security risk of this change." \
   --min 0 --max 100 --json
 ```
+
+![Decio の score デモ: 同じ変更が 100 点中 89 点と評価され、スコア範囲の action が実行されます](docs/demo-score.gif)
 
 デフォルトの出力は単一の値です。後続のコードが provider、model、confidence などのメタデータを必要とする場合は `--json` を使用します。`--result-exit-code` を指定すると、action が実行されなかった場合の有効な `false` の boolean 結果は exit code `1` を返します。これにより型付きの判断をシェル条件として使用できます。provider およびその他の Decio の失敗では、引き続き定義済みのエラーコードを使用します。
 
