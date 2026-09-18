@@ -1,0 +1,120 @@
+name: Setup decio
+description: Decio is a general-purpose decision CLI that turns context into typed decisions and optionally dispatches predefined actions.
+branding:
+  icon: check-square
+  color: blue
+
+inputs:
+  version:
+    description: decio version to install, or latest
+    required: false
+    default: latest
+  github-token:
+    description: GitHub token used when resolving the latest release
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: Installed decio version without the v prefix
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download and install decio
+      id: install
+      shell: bash
+      env:
+        REQUESTED_VERSION: ${{ inputs.version }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -euo pipefail
+
+        case "$(uname -s)" in
+          Linux)
+            os=linux
+            checksum_command=sha256sum
+            ;;
+          Darwin)
+            os=darwin
+            checksum_command=shasum
+            ;;
+          *)
+            echo "::error::Unsupported operating system: $(uname -s)" >&2
+            exit 1
+            ;;
+        esac
+
+        case "$(uname -m)" in
+          x86_64|amd64)
+            arch=amd64
+            ;;
+          arm64|aarch64)
+            arch=arm64
+            ;;
+          *)
+            echo "::error::Unsupported architecture: $(uname -m)" >&2
+            exit 1
+            ;;
+        esac
+
+        if [[ "$REQUESTED_VERSION" == "latest" ]]; then
+          release_json="$(
+            curl --fail --silent --show-error --location --retry 3 \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/youyo/decio/releases/latest"
+          )"
+          release_tag="$(printf '%s\n' "$release_json" | awk -F'"' '/"tag_name"/ { print $4; exit }')"
+          if [[ -z "$release_tag" ]]; then
+            echo "::error::GitHub API response did not contain a release tag" >&2
+            exit 1
+          fi
+          version="${release_tag#v}"
+        else
+          version="${REQUESTED_VERSION#v}"
+        fi
+
+        if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z.-]+)?$ ]]; then
+          echo "::error::Invalid decio version: ${version}" >&2
+          exit 1
+        fi
+
+        work_dir="${RUNNER_TEMP}/decio/${version}/${os}-${arch}"
+        install_dir="${RUNNER_TEMP}/decio-bin/${version}/${os}-${arch}"
+        mkdir -p "$work_dir" "$install_dir"
+
+        archive_name="decio_${version}_${os}_${arch}.tar.gz"
+        base_url="https://github.com/youyo/decio/releases/download/v${version}"
+        archive_path="${work_dir}/${archive_name}"
+        checksums_path="${work_dir}/checksums.txt"
+
+        curl --fail --silent --show-error --location --retry 3 \
+          --output "$archive_path" \
+          "${base_url}/${archive_name}"
+        curl --fail --silent --show-error --location --retry 3 \
+          --output "$checksums_path" \
+          "${base_url}/checksums.txt"
+
+        if ! grep -Fq "$archive_name" "$checksums_path"; then
+          echo "::error::The checksum file does not contain ${archive_name}" >&2
+          exit 1
+        fi
+
+        (
+          cd "$work_dir"
+          if [[ "$checksum_command" == "sha256sum" ]]; then
+            sha256sum -c --ignore-missing checksums.txt
+          else
+            shasum -a 256 -c --ignore-missing checksums.txt
+          fi
+        )
+
+        tar -xzf "$archive_path" -C "$install_dir"
+        chmod +x "$install_dir/decio"
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+        echo "$install_dir" >> "$GITHUB_PATH"
+        export PATH="$install_dir:$PATH"
+        decio version

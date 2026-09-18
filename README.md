@@ -2,8 +2,8 @@
 
 ## What is Decio?
 
-Decio is a general-purpose decision CLI for turning context into a typed
-decision and, optionally, dispatching a predefined action. It is designed for
+Decio is a general-purpose decision CLI that turns context into typed decisions
+and optionally dispatches predefined actions. It is designed for
 Unix workflows, hooks, CI/CD, agents, and automation. Claude Code Hooks are
 one representative use case, not a requirement: Decio itself has no
 Claude-specific assumptions.
@@ -203,6 +203,20 @@ git diff HEAD~1 | decio \
   --score "Rate the security risk of this change." \
   --min 0 --max 100 --json | jq -e '.value < 60'
 ```
+
+GitHub Actions can install the released binary and use it in later steps:
+
+```yaml
+- uses: youyo/decio@v0
+  with:
+    version: latest        # or v0.1.1
+- run: git diff HEAD~1 | decio --boolean "Does this change require running tests?" --result-exit-code
+  env:
+    TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+```
+
+Set `fetch-depth: 2` on `actions/checkout` when the workflow needs
+`git diff HEAD~1`.
 
 For reusable CI policy, put the input and action policy in a configuration
 file and run `decio -c .decio.yaml --json`.

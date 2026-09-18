@@ -19,3 +19,29 @@ jobs:
         run: mise run test
       - name: Lint
         run: mise run lint
+
+  action:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        version: [latest, v0.1.1]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up decio
+        id: setup
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+      - name: Verify decio version
+        env:
+          REQUESTED_VERSION: ${{ matrix.version }}
+          INSTALLED_VERSION: ${{ steps.setup.outputs.version }}
+        run: |
+          actual="$(decio version)"
+          test "$actual" = "$INSTALLED_VERSION"
+          if [[ "$REQUESTED_VERSION" != "latest" ]]; then
+            test "$actual" = "${REQUESTED_VERSION#v}"
+          fi

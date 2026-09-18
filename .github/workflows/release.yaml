@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*.*.*"]
 
 permissions:
   contents: write
@@ -30,3 +30,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: mise run release
+      - name: Update major release tag
+        run: |
+          major_tag="${GITHUB_REF_NAME%%.*}"
+          if [[ ! "$major_tag" =~ ^v[0-9]+$ ]]; then
+            echo "Unsupported release tag: ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+          git tag -f "$major_tag" "$GITHUB_SHA"
+          git push -f origin "$major_tag"
