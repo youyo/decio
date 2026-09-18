@@ -152,7 +152,7 @@ func Run(ctx context.Context, spec Spec, result decision.Result, originalStdin [
 		if exitCode := exitError.ExitCode(); exitCode < 0 {
 			state := "unknown signal"
 			if exitError.ProcessState != nil {
-				state = exitError.ProcessState.String()
+				state = exitError.String()
 			}
 			return 0, fmt.Errorf("%w: command terminated by signal (%s)", ErrDispatch, state)
 		}
