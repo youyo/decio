@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -165,6 +166,31 @@ actions:
 	}
 	if string(data) != "security" {
 		t.Fatalf("action output = %q, want security", data)
+	}
+}
+
+func TestRootActionOutputDoesNotMixWithJSONStdout(t *testing.T) {
+	configPath := writeTestConfig(t, `version: 1
+provider: {type: mock, model: test}
+decision:
+  type: boolean
+  prompt: approve?
+actions:
+  "true":
+    command: "printf 'action output\\n'"
+`)
+	stdout, stderr, err := executeTestCommand(t, []string{"-c", configPath, "--json"}, "input")
+	if err != nil {
+		t.Fatalf("execute = %v", err)
+	}
+	if !strings.HasSuffix(stdout, "\n") || strings.Count(stdout, "\n") != 1 || !json.Valid([]byte(strings.TrimSpace(stdout))) {
+		t.Fatalf("stdout = %q, want exactly one JSON line", stdout)
+	}
+	if strings.Contains(stdout, "action output") {
+		t.Fatalf("stdout = %q, must not contain action output", stdout)
+	}
+	if stderr != "action output\n" {
+		t.Fatalf("stderr = %q, want action output", stderr)
 	}
 }
 

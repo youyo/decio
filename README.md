@@ -149,7 +149,8 @@ Custom `env` values support only these substitutions:
 ```
 
 Confidence is empty when the provider did not return it. Action stdout and
-stderr are inherited from Decio. An action's exit code is returned directly.
+stderr are both written to Decio's stderr; Decio's stdout remains reserved for
+the result. An action's exit code is returned directly.
 
 ## Output
 

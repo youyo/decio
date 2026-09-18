@@ -191,7 +191,7 @@ func run(cmd *cobra.Command, opts *options) error {
 	if !opts.noAction {
 		if spec, ok := action.Resolve(cfg.Actions, result); ok {
 			actionStarted := time.Now()
-			code, runErr := action.Run(ctx, *spec, result, stdin)
+			code, runErr := action.Run(ctx, *spec, result, stdin, cmd.ErrOrStderr())
 			if runErr != nil {
 				return fail(6, runErr)
 			}

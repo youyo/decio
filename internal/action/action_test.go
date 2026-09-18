@@ -1,8 +1,11 @@
 package action
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -70,34 +73,34 @@ func TestRunInjectsEnvironmentAndExpandsTemplates(t *testing.T) {
 		Command: "test \"$DECIO_TYPE\" = choice && test \"$DECIO_VALUE\" = security && test \"$DECIO_PROVIDER\" = jev && test \"$DECIO_MODEL\" = default && test \"$CUSTOM\" = 'security/choice'",
 		Env:     map[string]string{"CUSTOM": "{{ result.value }}/{{ result.type }}"},
 	}
-	if code, err := Run(context.Background(), spec, res, nil); err != nil || code != 0 {
+	if code, err := Run(context.Background(), spec, res, nil, io.Discard); err != nil || code != 0 {
 		t.Fatalf("Run() = %d, %v", code, err)
 	}
 }
 
 func TestRunForwardsOriginalStdin(t *testing.T) {
 	spec := Spec{Command: "test \"$(cat)\" = 'original bytes'", Stdin: "original"}
-	if code, err := Run(context.Background(), spec, decision.Result{Type: decision.Boolean, Value: true}, []byte("original bytes")); err != nil || code != 0 {
+	if code, err := Run(context.Background(), spec, decision.Result{Type: decision.Boolean, Value: true}, []byte("original bytes"), io.Discard); err != nil || code != 0 {
 		t.Fatalf("Run() = %d, %v", code, err)
 	}
 }
 
 func TestRunPropagatesExitCode(t *testing.T) {
-	code, err := Run(context.Background(), Spec{Command: "exit 7"}, decision.Result{}, nil)
+	code, err := Run(context.Background(), Spec{Command: "exit 7"}, decision.Result{}, nil, io.Discard)
 	if err != nil || code != 7 {
 		t.Fatalf("Run() = %d, %v, want 7 and nil error", code, err)
 	}
 }
 
 func TestRunRejectsInvalidSpec(t *testing.T) {
-	_, err := Run(context.Background(), Spec{Stdin: "pipe"}, decision.Result{}, nil)
+	_, err := Run(context.Background(), Spec{Stdin: "pipe"}, decision.Result{}, nil, io.Discard)
 	if !errors.Is(err, ErrDispatch) {
 		t.Fatalf("Run() error = %v, want ErrDispatch", err)
 	}
 }
 
 func TestRunRejectsSignalTermination(t *testing.T) {
-	code, err := Run(context.Background(), Spec{Command: "kill -TERM $$"}, decision.Result{}, nil)
+	code, err := Run(context.Background(), Spec{Command: "kill -TERM $$"}, decision.Result{}, nil, io.Discard)
 	if code < 0 {
 		t.Fatalf("Run() code = %d, must not be negative", code)
 	}
@@ -106,5 +109,44 @@ func TestRunRejectsSignalTermination(t *testing.T) {
 	}
 	if !strings.Contains(strings.ToLower(err.Error()), "signal") {
 		t.Fatalf("Run() error = %v, want signal details", err)
+	}
+}
+
+func TestRunWritesActionOutputToWriterOnly(t *testing.T) {
+	stdoutReader, stdoutWriter, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	originalStdout := os.Stdout
+	os.Stdout = stdoutWriter
+	defer func() {
+		os.Stdout = originalStdout
+		_ = stdoutReader.Close()
+		_ = stdoutWriter.Close()
+	}()
+
+	var output bytes.Buffer
+	code, runErr := Run(
+		context.Background(),
+		Spec{Command: "printf 'action stdout'; printf 'action stderr' >&2"},
+		decision.Result{},
+		nil,
+		&output,
+	)
+	if runErr != nil || code != 0 {
+		t.Fatalf("Run() = %d, %v", code, runErr)
+	}
+	if err := stdoutWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	capturedStdout, err := io.ReadAll(stdoutReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(capturedStdout) != 0 {
+		t.Fatalf("os.Stdout = %q, want empty", capturedStdout)
+	}
+	if got, want := output.String(), "action stdoutaction stderr"; got != want {
+		t.Fatalf("output = %q, want %q", got, want)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -89,8 +90,9 @@ func cloneEnv(env map[string]string) map[string]string {
 	return cloned
 }
 
-// Run executes an already-resolved action and returns its process exit code.
-func Run(ctx context.Context, spec Spec, result decision.Result, originalStdin []byte) (int, error) {
+// Run executes an already-resolved action, writes its output to output, and
+// returns its process exit code.
+func Run(ctx context.Context, spec Spec, result decision.Result, originalStdin []byte, output io.Writer) (int, error) {
 	if strings.TrimSpace(spec.Command) == "" {
 		return -1, fmt.Errorf("%w: command is empty", ErrDispatch)
 	}
@@ -99,8 +101,8 @@ func Run(ctx context.Context, spec Spec, result decision.Result, originalStdin [
 	}
 
 	command := exec.CommandContext(ctx, "sh", "-c", spec.Command)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
+	command.Stdout = output
+	command.Stderr = output
 	if spec.Stdin == "original" {
 		command.Stdin = bytes.NewReader(originalStdin)
 	} else {
