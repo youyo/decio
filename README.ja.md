@@ -376,9 +376,28 @@ round(min + (s / (n - 1)) * (max - min))
 埋め込みリファレンス全体は `decio docs` で読めます。トピック一覧は
 `decio docs --list`、Claude Code Hook のレシピは `decio docs claude-code`
 で確認できます。
-再利用可能な skill は `cp -r skills/decio ~/.claude/skills/decio` でユーザー全体に、
-または `cp -r skills/decio .claude/skills/decio` でプロジェクト単位に導入できます。
-他のエージェントは `skills/decio/SKILL.md` を直接読めます。
+
+再利用できる skill を [`skills/decio`](skills/decio) に置いています。Decio でパイプラインや hook を組む手順をエージェントに教え、詳細は `decio docs` を参照させる構成です。使うエージェントに合わせて次のいずれかで導入してください。
+
+```sh
+# Claude Code(ユーザー全体のプロジェクトで使う)
+git clone https://github.com/youyo/decio.git /tmp/decio
+cp -r /tmp/decio/skills/decio ~/.claude/skills/decio
+
+# Claude Code(このプロジェクトだけで使う)
+cp -r /tmp/decio/skills/decio .claude/skills/decio
+
+# Codex CLI
+cp -r /tmp/decio/skills/decio ~/.codex/skills/decio
+
+# Agent Skills 形式に対応したエージェント全般(skills CLI 経由)
+npx skills add youyo/decio
+
+# それ以外のエージェント: ファイルを直接渡す
+curl -fsSL https://raw.githubusercontent.com/youyo/decio/main/skills/decio/SKILL.md
+```
+
+導入後は「decio で Claude Code の hook を作って」「この CI ジョブを decio でゲートして」のように頼めば、残りは skill が `decio docs` を読んで進めます。
 
 ## 開発
 

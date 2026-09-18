@@ -442,9 +442,31 @@ preserve Jev confidence when it is returned.
 Run `decio docs` for the complete embedded reference to Decio pipelines and
 hooks. Use `decio docs --list` to see topics, or `decio docs claude-code` for
 the Claude Code Hook recipe.
-Install the reusable skill with `cp -r skills/decio ~/.claude/skills/decio`
-for all users, or `cp -r skills/decio .claude/skills/decio` for one project.
-Other agents can read `skills/decio/SKILL.md` directly.
+
+A reusable skill lives in [`skills/decio`](skills/decio). It tells an agent how
+to build a pipeline or hook with Decio and points it at `decio docs` for the
+details. Install it in whichever way fits your agent:
+
+```sh
+# Claude Code, for every project of the current user
+git clone https://github.com/youyo/decio.git /tmp/decio
+cp -r /tmp/decio/skills/decio ~/.claude/skills/decio
+
+# Claude Code, for one project only
+cp -r /tmp/decio/skills/decio .claude/skills/decio
+
+# Codex CLI
+cp -r /tmp/decio/skills/decio ~/.codex/skills/decio
+
+# Any agent that follows the Agent Skills layout, via the skills CLI
+npx skills add youyo/decio
+
+# Any other agent: hand it the file directly
+curl -fsSL https://raw.githubusercontent.com/youyo/decio/main/skills/decio/SKILL.md
+```
+
+After installing, ask the agent to "build a Claude Code hook with decio" or
+"gate this CI job with decio"; the skill runs `decio docs` for the rest.
 
 ## Development
 
