@@ -30,6 +30,7 @@ changelog:
 
 brews:
   - name: decio
+    directory: Formula
     repository:
       owner: youyo
       name: homebrew-tap

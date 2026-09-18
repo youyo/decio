@@ -1,0 +1,51 @@
+# Decio configuration version; currently supported value is 1.
+version: 1
+
+provider:
+  # Provider implementation; currently supported value is jev.
+  type: jev
+  # Provider model; Jev uses jev-latest when omitted.
+  model: jev-latest
+
+input:
+  sources:
+    # Named input source; its value is sent to the provider.
+    context:
+      # Choose exactly one source kind: stdin, command, file, or literal.
+      stdin: true
+      # command: git diff
+      # file: .decio/policy.md
+      # literal: repository-context
+      # timeout: 10s
+
+decision:
+  # Decision type; this template uses choice (choice, boolean, or score).
+  type: choice
+  # Prompt sent to the decision provider.
+  prompt: Determine the appropriate follow-up for this change.
+  # Choice IDs and descriptions; at least two choices are required.
+  choices:
+    none:
+      # Human-readable meaning of this choice ID.
+      description: No additional review is required.
+    normal:
+      # Human-readable meaning of this choice ID.
+      description: A normal review is required.
+    security:
+      # Human-readable meaning of this choice ID.
+      description: A security review is required.
+  # Score-only range and levels are omitted for choice decisions.
+  # range: {min: 0, max: 100}
+  # levels: [very low, low, moderate, high, very high]
+
+actions:
+  # Actions map selected decision values to trusted commands.
+  # Map key selected by the provider; choice keys must be configured above.
+  security:
+    # Command to execute; commands come only from this configuration.
+    command: ./scripts/security-review.sh
+    # Action stdin mode; allowed values are original or none.
+    # stdin: original
+    # Optional environment values with result.* substitutions.
+    # env:
+    #   DECIO_DECISION: "{{ result.value }}"

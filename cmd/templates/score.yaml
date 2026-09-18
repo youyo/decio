@@ -1,0 +1,68 @@
+# Decio configuration version; currently supported value is 1.
+version: 1
+
+provider:
+  # Provider implementation; currently supported value is jev.
+  type: jev
+  # Provider model; Jev uses jev-latest when omitted.
+  model: jev-latest
+
+input:
+  sources:
+    # Named input source; its value is sent to the provider.
+    diff:
+      # Choose exactly one source kind: stdin, command, file, or literal.
+      command: git diff
+      # stdin: true
+      # file: .decio/policy.md
+      # literal: repository-context
+      # Timeout for command sources, for example 10s.
+      # timeout: 10s
+
+decision:
+  # Decision type; this template uses score (choice, boolean, or score).
+  type: score
+  # Prompt sent to the decision provider.
+  prompt: Rate the security risk of this change.
+  # Choice-only options are omitted for score decisions.
+  # choices:
+  #   security:
+  #     description: A security review is required.
+  # Inclusive score bounds; min must be less than max.
+  range:
+    # Inclusive lower score bound.
+    min: 0
+    # Inclusive upper score bound.
+    max: 100
+  # Optional ordered labels; omitted score decisions use five default levels.
+  # levels:
+  #   - very low
+  #   - low
+  #   - moderate
+  #   - high
+  #   - very high
+
+actions:
+  # Inclusive score-action range; ranges must not overlap.
+  - # Inclusive lower score-action bound.
+    min: 0
+    # Inclusive upper score-action bound.
+    max: 49
+    # Command to execute for scores in this range.
+    command: ./scripts/normal-review.sh
+    # Action stdin mode; allowed values are original or none.
+    # stdin: original
+    # Optional environment values with result.* substitutions.
+    # env:
+    #   DECIO_DECISION: "{{ result.value }}"
+  - # Inclusive lower score-action bound.
+    min: 50
+    # Inclusive upper score-action bound.
+    max: 100
+    # Command to execute for scores in this range.
+    command: ./scripts/security-review.sh
+    # Action stdin mode; allowed values are original or none.
+    # stdin: original
+    # Optional environment values with result.* substitutions.
+    # env:
+    #   DECIO_DECISION: "{{ result.value }}"

@@ -90,7 +90,7 @@ func NewRootCmd() *cobra.Command {
 	flags.DurationVar(&opts.timeout, "timeout", opts.timeout, "decision timeout")
 	flags.BoolVar(&opts.verbose, "verbose", false, "write diagnostic details to stderr")
 
-	root.AddCommand(newCompletionCmd(), newConfigCmd(), newVersionCmd())
+	root.AddCommand(newCompletionCmd(), newConfigCmd(), newInitCmd(), newVersionCmd())
 	return root
 }
 

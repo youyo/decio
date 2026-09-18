@@ -1,0 +1,49 @@
+# Decio configuration version; currently supported value is 1.
+version: 1
+
+provider:
+  # Provider implementation; currently supported value is jev.
+  type: jev
+  # Provider model; Jev uses jev-latest when omitted.
+  model: jev-latest
+
+input:
+  sources:
+    # Named input source; its value is sent to the provider.
+    diff:
+      # Choose exactly one source kind: stdin, command, file, or literal.
+      command: git diff
+      # stdin: true
+      # file: .decio/policy.md
+      # literal: repository-context
+      # Timeout for command sources, for example 10s.
+      # timeout: 10s
+
+decision:
+  # Decision type; this template uses boolean (choice, boolean, or score).
+  type: boolean
+  # Prompt sent to the decision provider.
+  prompt: Does this change require running the test suite?
+  # Boolean decisions return true or false and do not use choices.
+  # choices:
+  #   yes:
+  #     description: Continue with the test suite.
+  # Score-only range and levels are omitted for boolean decisions.
+  # range: {min: 0, max: 100}
+  # levels: [very low, low, moderate, high, very high]
+
+actions:
+  # Actions map boolean values to trusted commands.
+  # Boolean action key; use the quoted values true or false.
+  "true":
+    # Command to execute when the decision is true.
+    command: mise run test
+    # Action stdin mode; allowed values are original or none.
+    # stdin: original
+    # Optional environment values with result.* substitutions.
+    # env:
+    #   DECIO_DECISION: "{{ result.value }}"
+  # Uncomment to run a command when the decision is false.
+  # "false":
+  #   command: ./scripts/no-op.sh
+  #   stdin: none

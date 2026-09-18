@@ -30,6 +30,13 @@ export TYPESAFE_API_KEY="..."
 
 ## Quick start
 
+Start with a commented configuration template, edit it, then validate it:
+
+```sh
+decio init --type boolean -o .decio.yaml
+decio config validate -c .decio.yaml
+```
+
 The root command accepts a decision directly, so no configuration file is
 needed for simple cases. These examples read the current diff from stdin.
 
@@ -66,6 +73,9 @@ Use `-c`/`--config` to load a YAML configuration. If the flag is omitted, Decio
 looks for `.decio.yaml` and then `.decio.yml` in the current directory.
 `decio config validate -c path/to/config.yaml` validates a file without calling
 the provider.
+`decio init` writes a commented configuration template to stdout or to the
+path given by `-o`/`--output`; choose `choice`, `boolean`, or `score` with
+`--type`, and use `--force` to overwrite an existing file.
 
 The schema is intentionally strict: unknown keys are rejected.
 
