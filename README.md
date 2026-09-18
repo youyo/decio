@@ -1,9 +1,35 @@
 # Decio
 
+Turn context into typed decisions and optionally dispatch pre-declared actions.
+
+[日本語版はこちら](README.ja.md)
+
+```text
+context
+   │
+   ▼
+ Decio
+   │
+   ├── choice
+   ├── boolean
+   └── score
+   │
+   ▼
+pre-declared action
+```
+
+```sh
+git diff | decio \
+  --boolean "Does this change require running tests?" \
+  --result-exit-code
+```
+
+![Decio demo: git diff piped into decio returns true and runs the pre-declared test command](docs/demo.gif)
+
 ## What is Decio?
 
 Decio is a general-purpose decision CLI that turns context into typed decisions
-and optionally dispatches predefined actions. It is designed for
+and optionally dispatches pre-declared actions. It is designed for
 Unix workflows, hooks, CI/CD, agents, and automation. Claude Code Hooks are
 one representative use case, not a requirement: Decio itself has no
 Claude-specific assumptions.
@@ -14,7 +40,7 @@ decision result nor free-form model output is treated as a shell fragment.
 The boundary remains:
 
 ```text
-context → decision → predefined action
+context → decision → pre-declared action
 ```
 
 ## Core concepts
@@ -27,7 +53,7 @@ Input → Decision → Action
 
 - **Input** obtains the context that provides the material for a decision.
 - **Decision** returns a typed result: `choice`, `boolean`, or `score`.
-- **Action** runs a predefined operation associated with that decision, when
+- **Action** runs a pre-declared operation associated with that decision, when
   one is configured.
 
 Decio can complete an invocation after producing the decision; dispatch is
@@ -231,7 +257,7 @@ value=$(git diff | decio --boolean "Should tests run?")
 printf 'decision=%s\n' "$value"
 ```
 
-Actions remain optional and predefined, so a pipeline can choose whether to
+Actions remain optional and pre-declared, so a pipeline can choose whether to
 handle the typed result itself or dispatch a configured action.
 
 ## Input sources
@@ -258,7 +284,7 @@ input:
 Each source kind has a distinct role:
 
 - `stdin`: context handed in by the caller, such as a hook event or a piped diff.
-- `command`: context Decio collects itself by running a predefined command.
+- `command`: context Decio collects itself by running a pre-declared command.
 - `file`: a policy or reference document read from disk.
 - `literal`: a fixed value such as a repository or environment name.
 
