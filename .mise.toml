@@ -1,6 +1,6 @@
 [tools]
 go = "1.26"
-golangci-lint = "2.6.2"
+golangci-lint = "2.13.2"
 goreleaser = "2.12.7"
 
 [tasks.build]

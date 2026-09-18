@@ -22,11 +22,11 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: youyo
-          repositories: decio,homebrew-tap
+          repositories: homebrew-tap
       - name: Set up mise
         uses: jdx/mise-action@v2
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: mise run release
