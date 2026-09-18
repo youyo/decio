@@ -1,12 +1,39 @@
 # Decio
 
-Decio turns context into a typed decision and, optionally, dispatches a
-pre-declared command. It supports choice, boolean, and bounded score decisions;
-stdin, command, file, and literal inputs; plain or JSON output; and the Jev
-provider from TypeSafe.
+## What is Decio?
 
-The model may choose an allowed action, but it may not author the action.
-Commands always come from the trusted configuration.
+Decio is a general-purpose decision CLI for turning context into a typed
+decision and, optionally, dispatching a predefined action. It is designed for
+Unix workflows, hooks, CI/CD, agents, and automation. Claude Code Hooks are
+one representative use case, not a requirement: Decio itself has no
+Claude-specific assumptions.
+
+Decio does not generate or execute arbitrary commands. Every command that can
+run as an action must be declared in trusted configuration. Neither a
+decision result nor free-form model output is treated as a shell fragment.
+The boundary remains:
+
+```text
+context → decision → predefined action
+```
+
+## Core concepts
+
+Decio's core model is:
+
+```text
+Input → Decision → Action
+```
+
+- **Input** obtains the context that provides the material for a decision.
+- **Decision** returns a typed result: `choice`, `boolean`, or `score`.
+- **Action** runs a predefined operation associated with that decision, when
+  one is configured.
+
+Decio can complete an invocation after producing the decision; dispatch is
+optional. This makes `context → typed decision` useful on its own for shell
+conditions, CI/CD gates, and downstream automation, without turning Decio
+into a free-form text generation CLI.
 
 ## Installation
 
@@ -28,17 +55,20 @@ Set the Jev API key before making a decision:
 export TYPESAFE_API_KEY="..."
 ```
 
-## Quick start
+## Quick Start
 
-Start with a commented configuration template, edit it, then validate it:
+Decio supports two levels of use. For simple cases, no configuration file is
+needed: pass a decision type and prompt as CLI flags, and pipe context through
+stdin. When the workflow needs complex inputs or actions, use declarative
+YAML configuration.
+
+### Simple: CLI flags and stdin
+
+This boolean decision can be used directly in a Unix pipeline:
 
 ```sh
-decio init --type boolean -o .decio.yaml
-decio config validate -c .decio.yaml
+git diff | decio --boolean "Does this change require running tests?" --result-exit-code
 ```
-
-The root command accepts a decision directly, so no configuration file is
-needed for simple cases. These examples read the current diff from stdin.
 
 Choice:
 
@@ -46,14 +76,6 @@ Choice:
 git diff | decio \
   --choice none --choice normal --choice security \
   --prompt "Determine the appropriate review level."
-```
-
-Boolean:
-
-```sh
-git diff | decio \
-  --boolean "Does this change require running tests?" \
-  --result-exit-code
 ```
 
 Score:
@@ -65,14 +87,33 @@ git diff | decio \
 ```
 
 The default output is a single plain value. Use `--json` when downstream code
-needs metadata such as the provider, model, or confidence.
+needs metadata such as the provider, model, or confidence. With
+`--result-exit-code`, a valid `false` boolean result returns exit code `1`
+when no action ran, which makes a typed decision usable as a shell condition;
+provider and other Decio failures still use their documented error codes.
+
+### Declarative: configuration
+
+Start with a commented configuration template, edit it, then validate it:
+
+```sh
+decio init --type boolean -o .decio.yaml
+decio config validate -c .decio.yaml
+```
+
+Run the configured workflow with:
+
+```sh
+decio -c .decio.yaml
+```
 
 ## Configuration
 
-Use `-c`/`--config` to load a YAML configuration. If the flag is omitted, Decio
-looks for `.decio.yaml` and then `.decio.yml` in the current directory.
-`decio config validate -c path/to/config.yaml` validates a file without calling
-the provider.
+Use `-c`/`--config` to load a YAML configuration. If the flag is omitted,
+Decio looks for `.decio.yaml` and then `.decio.yml` in the current directory.
+`decio config validate -c path/to/config.yaml` validates a file without
+calling the provider.
+
 `decio init` writes a commented configuration template to stdout or to the
 path given by `-o`/`--output`; choose `choice`, `boolean`, or `score` with
 `--type`, and use `--force` to overwrite an existing file.
@@ -107,9 +148,107 @@ normalized multi-source provider input.
 
 See the complete examples in [`examples/`](examples/).
 
+## Use Cases
+
+### Claude Code Hooks
+
+The [`examples/claude-code/post-tool.yaml`](examples/claude-code/post-tool.yaml)
+configuration accepts a hook event on stdin, collects the current diff, and
+can run a follow-up command with the original hook event on stdin.
+
+A corresponding `settings.json` entry can invoke it as a command hook:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "decio -c /absolute/path/to/examples/claude-code/post-tool.yaml"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Use an absolute configuration path, and ensure the hook process has access to
+`TYPESAFE_API_KEY`. The action commands are declared by the configuration and
+are never generated from provider output.
+
+### Git Hooks
+
+A Git hook can make a typed decision from the staged diff. With
+`--result-exit-code`, `0` means a valid `true` result and `1` means a valid
+`false` result when no action ran; codes `2` and above indicate a Decio or
+provider failure.
+
+```sh
+git diff --cached | decio \
+  --boolean "Does this staged change require running tests?" \
+  --result-exit-code
+```
+
+### CI/CD
+
+CI can consume JSON metadata and make a follow-up gate with standard shell
+tools:
+
+```sh
+git diff HEAD~1 | decio \
+  --score "Rate the security risk of this change." \
+  --min 0 --max 100 --json | jq -e '.value < 60'
+```
+
+For reusable CI policy, put the input and action policy in a configuration
+file and run `decio -c .decio.yaml --json`.
+
+### Shell automation
+
+The plain result is convenient for shell variables, while `--json` exposes
+stable metadata for tools such as `jq`:
+
+```sh
+value=$(git diff | decio --boolean "Should tests run?")
+printf 'decision=%s\n' "$value"
+```
+
+Actions remain optional and predefined, so a pipeline can choose whether to
+handle the typed result itself or dispatch a configured action.
+
 ## Input sources
 
-When no named sources are configured, piped stdin becomes the single text input.
+Input can come from outside Decio through stdin, or Decio can collect it from
+configured sources. This keeps both ordinary Unix pipelines and reusable
+declarative workflows straightforward.
+
+External context can be piped directly into a flag-based invocation:
+
+```sh
+git diff | decio --boolean "Does this change require running tests?"
+```
+
+Decio can also obtain context itself from a configured command:
+
+```yaml
+input:
+  sources:
+    diff:
+      command: git diff HEAD~1
+```
+
+Each source kind has a distinct role:
+
+- `stdin`: context handed in by the caller, such as a hook event or a piped diff.
+- `command`: context Decio collects itself by running a predefined command.
+- `file`: a policy or reference document read from disk.
+- `literal`: a fixed value such as a repository or environment name.
+
+If no named sources are configured, piped stdin becomes the single text input.
 Named sources are collected in YAML configuration order and sent to the
 provider as structured state:
 
@@ -126,10 +265,10 @@ input:
       literal: backend-api
 ```
 
-Command sources run through `sh -c`, capture stdout, and treat a non-zero exit
-or timeout as an input error. Their stderr is kept for diagnostics and is not
-silently added to provider input. The original stdin is read once so it can be
-used both for the decision and, when requested, by a dispatched action.
+Command sources run through `sh -c`, capture stdout, and treat a non-zero
+exit or timeout as an input error. Their stderr is kept for diagnostics and is
+not silently added to provider input. The original stdin is read once so it
+can be used both for the decision and, when requested, by a dispatched action.
 
 ## Dispatch and action environment
 
@@ -137,6 +276,10 @@ Dispatch is optional. For choice and boolean decisions, the selected value is
 used as an action key (`true` or `false` for boolean). For scores, the first
 inclusive range containing the result is selected. A missing action means
 output-only execution, not an error.
+
+Actions are selected from commands already declared in configuration. Decio
+does not interpolate a model response into a command or execute a command
+written by the provider.
 
 Each action receives these metadata variables:
 
@@ -232,36 +375,6 @@ The default levels are the five ordered labels `very low`, `low`, `moderate`,
 levels are required by the provider contract. Choice and score decisions also
 preserve Jev confidence when it is returned.
 
-## Claude Code Hooks
-
-The [`examples/claude-code/post-tool.yaml`](examples/claude-code/post-tool.yaml)
-configuration accepts a hook event on stdin, collects the current diff, and
-can run a follow-up command with the original hook event on stdin.
-
-A corresponding `settings.json` entry can invoke it as a command hook:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Bash|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "decio -c /absolute/path/to/examples/claude-code/post-tool.yaml"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Use an absolute configuration path, and ensure the hook process has access to
-`TYPESAFE_API_KEY`. The action commands are declared by the configuration and
-are never generated from provider output.
-
 ## Development
 
 The repository pins its development tools with mise:
@@ -282,10 +395,10 @@ GitHub credentials described in `.goreleaser.yaml` and
 ## Security model
 
 Configuration files are executable policy and must be treated like shell
-scripts. Decio never executes provider-generated command text: providers select
-only among commands already declared by the user. Choice values are identifiers,
-not shell fragments, and arbitrary model output is not interpolated into a
-command string.
+scripts. Decio never executes provider-generated command text: providers
+select only among commands already declared by the user. Choice values are
+identifiers, not shell fragments, and arbitrary model output is not
+interpolated into a command string.
 
 Secrets stay in environment or secret stores and should not be included in
 provider input unless explicitly collected. Source stderr is diagnostic only.
