@@ -442,6 +442,9 @@ preserve Jev confidence when it is returned.
 Run `decio docs` for the complete embedded reference to Decio pipelines and
 hooks. Use `decio docs --list` to see topics, or `decio docs claude-code` for
 the Claude Code Hook recipe.
+Install the reusable skill with `cp -r skills/decio ~/.claude/skills/decio`
+for all users, or `cp -r skills/decio .claude/skills/decio` for one project.
+Other agents can read `skills/decio/SKILL.md` directly.
 
 ## Development
 

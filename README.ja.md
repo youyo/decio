@@ -376,6 +376,9 @@ round(min + (s / (n - 1)) * (max - min))
 埋め込みリファレンス全体は `decio docs` で読めます。トピック一覧は
 `decio docs --list`、Claude Code Hook のレシピは `decio docs claude-code`
 で確認できます。
+再利用可能な skill は `cp -r skills/decio ~/.claude/skills/decio` でユーザー全体に、
+または `cp -r skills/decio .claude/skills/decio` でプロジェクト単位に導入できます。
+他のエージェントは `skills/decio/SKILL.md` を直接読めます。
 
 ## 開発
 
