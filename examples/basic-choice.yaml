@@ -1,0 +1,26 @@
+version: 1
+
+provider:
+  type: jev
+  model: jev-latest
+
+input:
+  sources:
+    stdin:
+      stdin: true
+
+decision:
+  type: choice
+  prompt: Determine the appropriate follow-up for this change.
+  choices:
+    none:
+      description: No additional review is required.
+    normal:
+      description: A normal review is required.
+    security:
+      description: A security review is required.
+
+actions:
+  security:
+    command: ./scripts/security-review.sh
+    stdin: original

@@ -1,0 +1,22 @@
+[tools]
+go = "1.26"
+golangci-lint = "2.6.2"
+goreleaser = "2.12.7"
+
+[tasks.build]
+run = "go build -o dist/decio ."
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks.lint]
+run = "golangci-lint run"
+
+[tasks.fmt]
+run = "gofmt -w $(find . -name '*.go' -type f)"
+
+[tasks.check]
+depends = ["fmt", "lint", "test"]
+
+[tasks.release]
+run = "goreleaser release --clean"

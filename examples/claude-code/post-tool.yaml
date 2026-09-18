@@ -1,0 +1,32 @@
+version: 1
+
+provider:
+  type: jev
+  model: jev-latest
+
+input:
+  sources:
+    event:
+      stdin: true
+    diff:
+      command: git diff
+      timeout: 5s
+
+decision:
+  type: choice
+  prompt: Determine whether this tool execution requires a follow-up.
+  choices:
+    none:
+      description: No follow-up is needed.
+    test:
+      description: Relevant tests should run.
+    security:
+      description: A security review should run.
+
+actions:
+  test:
+    command: mise run test
+    stdin: original
+  security:
+    command: ./scripts/security-review.sh
+    stdin: original

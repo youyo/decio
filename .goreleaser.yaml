@@ -1,0 +1,41 @@
+version: 2
+
+builds:
+  - id: decio
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/youyo/decio/cmd.Version={{.Version}}
+
+archives:
+  - formats:
+      - tar.gz
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+brews:
+  - name: decio
+    repository:
+      owner: youyo
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/youyo/decio
+    description: Typed decisions from context with optional command dispatch
+    install: |
+      bin.install "decio"
+      generate_completions_from_executable(bin/"decio", "completion")

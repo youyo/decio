@@ -1,0 +1,38 @@
+version: 1
+
+provider:
+  type: jev
+  model: jev-latest
+
+input:
+  sources:
+    diff:
+      command: git diff
+      timeout: 5s
+
+decision:
+  type: score
+  prompt: Rate the security risk of this change.
+  range:
+    min: 0
+    max: 100
+  levels:
+    - very low
+    - low
+    - moderate
+    - high
+    - very high
+
+actions:
+  - min: 0
+    max: 19
+    command: ./scripts/low-risk-review.sh
+  - min: 20
+    max: 59
+    command: ./scripts/normal-review.sh
+  - min: 60
+    max: 79
+    command: ./scripts/elevated-review.sh
+  - min: 80
+    max: 100
+    command: ./scripts/security-review.sh

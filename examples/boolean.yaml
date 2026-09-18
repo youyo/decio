@@ -1,0 +1,19 @@
+version: 1
+
+provider:
+  type: jev
+  model: jev-latest
+
+input:
+  sources:
+    diff:
+      command: git diff
+      timeout: 5s
+
+decision:
+  type: boolean
+  prompt: Does this change require running the test suite?
+
+actions:
+  "true":
+    command: mise run test
