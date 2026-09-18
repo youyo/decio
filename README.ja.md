@@ -377,23 +377,36 @@ round(min + (s / (n - 1)) * (max - min))
 `decio docs --list`、Claude Code Hook のレシピは `decio docs claude-code`
 で確認できます。
 
-再利用できる skill を [`skills/decio`](skills/decio) に置いています。Decio でパイプラインや hook を組む手順をエージェントに教え、詳細は `decio docs` を参照させる構成です。使うエージェントに合わせて次のいずれかで導入してください。
+再利用できる skill を [`skills/decio`](skills/decio) に置いています。Decio でパイプラインや hook を組む手順をエージェントに教え、詳細は `decio docs` を参照させる構成です。リポジトリは [Agent Skills](https://agentskills.io) 仕様の `skills/*/SKILL.md` 配置に従っているので、skill インストーラがそのまま見つけられます。
 
 ```sh
-# Claude Code(ユーザー全体のプロジェクトで使う)
+# GitHub CLI 2.90 以降(既定はプロジェクト単位。全プロジェクトで使うなら --scope user)
+gh skill install youyo/decio --scope user --agent claude-code
+
+# Skills CLI(-g でユーザー単位、-a で対象エージェントを指定)
+npx skills add youyo/decio -g -a claude-code -a codex
+```
+
+インストーラを使わない場合は、リポジトリを clone して `skills/decio` をエージェントが読むディレクトリにコピーします。多くのエージェントは共通の `~/.agents/skills`(ユーザー)と `.agents/skills`(プロジェクト)も読みます。
+
+| エージェント | ユーザー単位 | プロジェクト単位 |
+| --- | --- | --- |
+| Claude Code | `~/.claude/skills/decio` | `.claude/skills/decio` |
+| Codex CLI | `~/.codex/skills/decio` | `.codex/skills/decio` |
+| Cursor | `~/.cursor/skills/decio` | `.cursor/skills/decio` |
+| Gemini CLI | `~/.gemini/skills/decio` | `.gemini/skills/decio` |
+| GitHub Copilot CLI | `~/.copilot/skills/decio` | `.github/skills/decio` |
+| OpenCode | `~/.config/opencode/skills/decio` | `.opencode/skills/decio` |
+| 共通(Codex、Cursor、Gemini、Copilot、OpenCode) | `~/.agents/skills/decio` | `.agents/skills/decio` |
+
+```sh
 git clone https://github.com/youyo/decio.git /tmp/decio
-cp -r /tmp/decio/skills/decio ~/.claude/skills/decio
+cp -r /tmp/decio/skills/decio ~/.agents/skills/decio
+```
 
-# Claude Code(このプロジェクトだけで使う)
-cp -r /tmp/decio/skills/decio .claude/skills/decio
+それ以外のエージェントにはファイルを直接渡せます。
 
-# Codex CLI
-cp -r /tmp/decio/skills/decio ~/.codex/skills/decio
-
-# Agent Skills 形式に対応したエージェント全般(skills CLI 経由)
-npx skills add youyo/decio
-
-# それ以外のエージェント: ファイルを直接渡す
+```sh
 curl -fsSL https://raw.githubusercontent.com/youyo/decio/main/skills/decio/SKILL.md
 ```
 

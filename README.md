@@ -445,23 +445,40 @@ the Claude Code Hook recipe.
 
 A reusable skill lives in [`skills/decio`](skills/decio). It tells an agent how
 to build a pipeline or hook with Decio and points it at `decio docs` for the
-details. Install it in whichever way fits your agent:
+details. The repository follows the `skills/*/SKILL.md` layout of the
+[Agent Skills](https://agentskills.io) specification, so skill installers find
+it automatically:
 
 ```sh
-# Claude Code, for every project of the current user
+# GitHub CLI 2.90 or later (project scope by default; --scope user for all projects)
+gh skill install youyo/decio --scope user --agent claude-code
+
+# Skills CLI (-g for the user scope, -a to pick agents)
+npx skills add youyo/decio -g -a claude-code -a codex
+```
+
+Without an installer, clone the repository and copy `skills/decio` into the
+directory your agent reads. Most agents also read the shared
+`~/.agents/skills` (user) and `.agents/skills` (project) directories.
+
+| Agent | User scope | Project scope |
+| --- | --- | --- |
+| Claude Code | `~/.claude/skills/decio` | `.claude/skills/decio` |
+| Codex CLI | `~/.codex/skills/decio` | `.codex/skills/decio` |
+| Cursor | `~/.cursor/skills/decio` | `.cursor/skills/decio` |
+| Gemini CLI | `~/.gemini/skills/decio` | `.gemini/skills/decio` |
+| GitHub Copilot CLI | `~/.copilot/skills/decio` | `.github/skills/decio` |
+| OpenCode | `~/.config/opencode/skills/decio` | `.opencode/skills/decio` |
+| Shared (Codex, Cursor, Gemini, Copilot, OpenCode) | `~/.agents/skills/decio` | `.agents/skills/decio` |
+
+```sh
 git clone https://github.com/youyo/decio.git /tmp/decio
-cp -r /tmp/decio/skills/decio ~/.claude/skills/decio
+cp -r /tmp/decio/skills/decio ~/.agents/skills/decio
+```
 
-# Claude Code, for one project only
-cp -r /tmp/decio/skills/decio .claude/skills/decio
+Any other agent can be handed the file directly:
 
-# Codex CLI
-cp -r /tmp/decio/skills/decio ~/.codex/skills/decio
-
-# Any agent that follows the Agent Skills layout, via the skills CLI
-npx skills add youyo/decio
-
-# Any other agent: hand it the file directly
+```sh
 curl -fsSL https://raw.githubusercontent.com/youyo/decio/main/skills/decio/SKILL.md
 ```
 
