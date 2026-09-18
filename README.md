@@ -451,7 +451,7 @@ it automatically:
 
 ```sh
 # GitHub CLI 2.90 or later (project scope by default; --scope user for all projects)
-gh skill install youyo/decio --scope user --agent claude-code
+gh skill install youyo/decio decio --scope user --agent claude-code
 
 # Skills CLI (-g for the user scope, -a to pick agents)
 npx skills add youyo/decio -g -a claude-code -a codex

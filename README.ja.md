@@ -381,7 +381,7 @@ round(min + (s / (n - 1)) * (max - min))
 
 ```sh
 # GitHub CLI 2.90 以降(既定はプロジェクト単位。全プロジェクトで使うなら --scope user)
-gh skill install youyo/decio --scope user --agent claude-code
+gh skill install youyo/decio decio --scope user --agent claude-code
 
 # Skills CLI(-g でユーザー単位、-a で対象エージェントを指定)
 npx skills add youyo/decio -g -a claude-code -a codex

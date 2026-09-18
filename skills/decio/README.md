@@ -6,7 +6,7 @@ Claude Code Hooks with Decio. It relies on `decio docs` for reference details.
 Install it with a skill installer:
 
 ```sh
-gh skill install youyo/decio --scope user --agent claude-code   # GitHub CLI 2.90+
+gh skill install youyo/decio decio --scope user --agent claude-code   # GitHub CLI 2.90+
 npx skills add youyo/decio -g -a claude-code -a codex           # Skills CLI
 ```
 
