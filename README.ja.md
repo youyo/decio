@@ -371,6 +371,12 @@ round(min + (s / (n - 1)) * (max - min))
 
 デフォルトのレベルは `very low`、`low`、`moderate`、`high`、`very high` の 5 つの順序付きラベルです。`decision.levels` を設定すると置き換えられます。provider の契約により、少なくとも 2 つのレベルが必要です。choice と score の判断は、返された Jev の confidence も保持します。
 
+## AI エージェント向け
+
+埋め込みリファレンス全体は `decio docs` で読めます。トピック一覧は
+`decio docs --list`、Claude Code Hook のレシピは `decio docs claude-code`
+で確認できます。
+
 ## 開発
 
 リポジトリは mise で開発ツールを固定しています。

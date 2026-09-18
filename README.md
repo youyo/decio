@@ -437,6 +437,12 @@ The default levels are the five ordered labels `very low`, `low`, `moderate`,
 levels are required by the provider contract. Choice and score decisions also
 preserve Jev confidence when it is returned.
 
+## For AI agents
+
+Run `decio docs` for the complete embedded reference to Decio pipelines and
+hooks. Use `decio docs --list` to see topics, or `decio docs claude-code` for
+the Claude Code Hook recipe.
+
 ## Development
 
 The repository pins its development tools with mise:
