@@ -70,6 +70,19 @@ go install github.com/youyo/decio@latest
 export TYPESAFE_API_KEY="..."
 ```
 
+### シェル補完
+
+`decio completion <shell>` で zsh、bash、fish、PowerShell 向けの補完スクリプトを生成できます。zsh では起動のたびに eval するのではなく、`fpath` 上のディレクトリにスクリプトを置き、補完キャッシュを作り直す方法をおすすめします。
+
+```sh
+mkdir -p ~/.zsh/completions
+decio completion zsh > ~/.zsh/completions/_decio
+rm -f ~/.zcompdump*
+exec zsh
+```
+
+`~/.zshrc` では `fpath=(~/.zsh/completions $fpath)` を `compinit` より前に置いてください。`eval "$(decio completion zsh)"` でも動きますが、`compinit` の実行後に置く必要があります。
+
 ## クイックスタート
 
 Decio には 2 つの利用方法があります。単純なケースでは設定ファイルは不要です。判断の種類とプロンプトを CLI フラグで渡し、stdin を通してコンテキストをパイプします。ワークフローに複雑な入力や action が必要な場合は、宣言的な YAML 設定を使用します。

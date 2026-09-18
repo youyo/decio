@@ -81,6 +81,24 @@ Set the Jev API key before making a decision:
 export TYPESAFE_API_KEY="..."
 ```
 
+### Shell completion
+
+Decio generates completion scripts for zsh, bash, fish, and PowerShell with
+`decio completion <shell>`. For zsh, install the script into a directory on
+`fpath` rather than evaluating it on every startup, then rebuild the completion
+cache:
+
+```sh
+mkdir -p ~/.zsh/completions
+decio completion zsh > ~/.zsh/completions/_decio
+rm -f ~/.zcompdump*
+exec zsh
+```
+
+Make sure `fpath=(~/.zsh/completions $fpath)` appears before `compinit` in
+`~/.zshrc`. Evaluating the script inline (`eval "$(decio completion zsh)"`)
+also works, but only after `compinit` has run.
+
 ## Quick Start
 
 Decio supports two levels of use. For simple cases, no configuration file is
